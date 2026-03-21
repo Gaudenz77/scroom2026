@@ -1,124 +1,213 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react"
+import ScrRoom from "./components/ScrRoom"
+import ScrSettings from "./components/ScrSettings"
+import TopBar from "./components/TopBar"
 
-function App() {
-  const [count, setCount] = useState(0)
+// TYPES
+export type VisitorStatus =
+  | "waiting"
+  | "active"
+  | "warn"
+  | "overtime"
+
+export type Visitor = {
+  id: number
+  name: string
+  status: VisitorStatus
+  startTime: number | null
+}
+
+export type RoomSettings = {
+  name: string
+  maxStay: number
+  warnTime: number
+  maxClients: number
+}
+
+export type Room = {
+  id: string
+  settings: RoomSettings
+  visitors: Visitor[]
+}
+
+export default function App() {
+  const [view, setView] = useState<"room" | "settings">("room")
+  const [selectedRoomId, setSelectedRoomId] = useState("roomA")
+
+  // FIXED: lazy initializer to allow Date.now()
+  const [rooms, setRooms] = useState<Room[]>(() => [
+    {
+      id: "roomA",
+      settings: {
+        name: "Raucherraum",
+        maxStay: 3,
+        warnTime: 2,
+        maxClients: 3
+      },
+      visitors: [
+        { id: 5, name: "4", status: "waiting", startTime: null },
+        { id: 3, name: "Jimmy", status: "active", startTime: Date.now() - 103 * 60000 },
+        { id: 6, name: "jan", status: "active", startTime: Date.now() - 93 * 60000 },
+        { id: 1, name: "John", status: "overtime", startTime: Date.now() - 2614 * 60000 },
+        { id: 2, name: "Jane", status: "warn", startTime: Date.now() - 2610 * 60000 }
+      ]
+    },
+    {
+      id: "roomB",
+      settings: {
+        name: "IV-Raum",
+        maxStay: 3,
+        warnTime: 2,
+        maxClients: 3
+      },
+      visitors: []
+    }
+  ])
+
+  const selectedRoom = rooms.find(r => r.id === selectedRoomId)!
+
+  function updateRoomSettings(roomId: string, newSettings: RoomSettings) {
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? { ...room, settings: newSettings }
+          : room
+      )
+    )
+  }
+
+  function setVisitorActive(roomId: string, visitorId: number) {
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+
+        return {
+          ...room,
+          visitors: room.visitors.map(v =>
+            v.id === visitorId
+              ? { ...v, status: "active", startTime: Date.now() }
+              : v
+          )
+        }
+      })
+    )
+  }
+
+  function removeVisitor(roomId: string, visitorId: number) {
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+
+        return {
+          ...room,
+          visitors: room.visitors.filter(v => v.id !== visitorId)
+        }
+      })
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-        <button className="bg-orange-200 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">
-  Test Tailwind
-</button>
-      </section>
+    <div className="w-full h-full flex flex-col">
 
-      <div className="ticks"></div>
+      <TopBar
+        rooms={rooms.map(r => ({ id: r.id, name: r.settings.name }))}
+        selectedRoomId={selectedRoomId}
+        onSelectRoom={setSelectedRoomId}
+        onOpenSettings={() => setView("settings")}
+      />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <div className="flex-1">
+        {view === "room" && (
+          <ScrRoom
+            room={selectedRoom}
+            onSetActive={setVisitorActive}
+            onRemove={removeVisitor}
+          />
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {view === "settings" && (
+          <ScrSettings
+            room={selectedRoom}
+            onSave={updateRoomSettings}
+            onBack={() => setView("room")}
+          />
+        )}
+      </div>
+
+    </div>
   )
 }
 
-export default App
+/*
+import { useState } from "react"
+import ScrRoom from "./components/ScrRoom"
+import ScrSettings from "./components/ScrSettings"
+import TopBar from "./components/TopBar"
+
+export default function App() {
+  const [view, setView] = useState<"room" | "settings">("room")
+
+  const [rooms] = useState([
+    { id: "roomA", name: "Raucherraum" },
+    { id: "roomB", name: "IV-Raum" }
+  ])
+
+  const [selectedRoomId, setSelectedRoomId] = useState("roomA")
+
+  return (
+    <div className="w-full h-full flex flex-col">
+
+      <TopBar
+        rooms={rooms}
+        selectedRoomId={selectedRoomId}
+        onSelectRoom={setSelectedRoomId}
+        onOpenSettings={() => setView("settings")}
+      />
+
+      <div className="flex-1">
+        {view === "room" && (
+          <ScrRoom roomId={selectedRoomId} />
+        )}
+
+        {view === "settings" && (
+          <ScrSettings
+            roomId={selectedRoomId}
+            onBack={() => setView("room")}
+          />
+        )}
+      </div>
+
+    </div>
+  )
+}
+
+
+/* 
+import ScrRoom from "./components/ScrRoom"
+import ScrSettings from "./components/ScrSettings"
+
+export default function App() {
+  const [view, setView] = useState<"room" | "settings">("room")
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
+
+  return (
+    <div className="w-full h-full">
+      {view === "room" && (
+        <ScrRoom
+          onOpenSettings={(roomId) => {
+            setSelectedRoomId(roomId)
+            setView("settings")
+          }}
+        />
+      )}
+
+      {view === "settings" && (
+        <ScrSettings
+          roomId={selectedRoomId}
+          onBack={() => setView("room")}
+        />
+      )}
+    </div>
+  )
+}
+*/
