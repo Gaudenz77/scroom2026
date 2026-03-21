@@ -106,6 +106,33 @@ export default function App() {
     )
   }
 
+  function addVisitor(roomId: string, name: string) {
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+  
+        // auto-increment ID
+        const nextId =
+          room.visitors.length === 0
+            ? 1
+            : Math.max(...room.visitors.map(v => v.id)) + 1
+  
+        const newVisitor = {
+          id: nextId,
+          name,
+          status: "waiting" as const,
+          startTime: null
+        }
+  
+        return {
+          ...room,
+          visitors: [...room.visitors, newVisitor]
+        }
+      })
+    )
+  }
+  
+
   return (
     <div className="w-full h-full flex flex-col">
 
@@ -122,6 +149,7 @@ export default function App() {
             room={selectedRoom}
             onSetActive={setVisitorActive}
             onRemove={removeVisitor}
+            onAddVisitor={addVisitor}
           />
         )}
 
