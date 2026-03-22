@@ -214,11 +214,13 @@ export default function App() {
 
         {view === "settings" && (
           <ScrSettings
+            key={selectedRoomId}   // ← THIS forces a fresh mount on room change
             room={selectedRoom}
             onSave={updateRoomSettings}
             onBack={() => setView("room")}
           />
         )}
+
       </div>
 
     </div>

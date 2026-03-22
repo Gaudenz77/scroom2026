@@ -1,4 +1,5 @@
 import { useState } from "react"
+import Swal from "sweetalert2"
 import type { Room, RoomSettings } from "../App"
 
 type ScrSettingsProps = {
@@ -21,7 +22,15 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
       maxClients,
       warnTime
     })
-    onBack()
+
+    Swal.fire({
+      icon: "success",
+      title: "Erfolgreich gespeichert",
+      text: "Die Raumdaten wurden aktualisiert.",
+      confirmButtonText: "OK"
+    }).then(() => {
+      onBack()
+    })
   }
 
   return (
