@@ -11,17 +11,16 @@ function computeMinutes(now: number, startTime: number | null) {
 }
 
 function formatMinSec(minutes: number | null, now: number, startTime: number | null) {
-    if (startTime == null) return "-"
-  
-    const diffMs = now - startTime
-    const totalSeconds = Math.floor(diffMs / 1000)
-  
-    const m = Math.floor(totalSeconds / 60)
-    const s = totalSeconds % 60
-  
-    return `${m}:${s.toString().padStart(2, "0")}`
-  }
-  
+  if (startTime == null) return "-"
+
+  const diffMs = now - startTime
+  const totalSeconds = Math.floor(diffMs / 1000)
+
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+
+  return `${m}:${s.toString().padStart(2, "0")}`
+}
 
 function deriveStatus(
   baseStatus: string,
@@ -86,10 +85,8 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: S
   // -----------------------------
   // GROUP VISITORS
   // -----------------------------
-  const activeVisitors = visitors.filter(v =>
-    v.effectiveStatus === "waiting" || v.effectiveStatus === "active"
-  )
-
+  const waitingVisitors = visitors.filter(v => v.effectiveStatus === "waiting")
+  const activeNowVisitors = visitors.filter(v => v.effectiveStatus === "active")
   const overtimeVisitors = visitors.filter(v =>
     v.effectiveStatus === "warn" || v.effectiveStatus === "overtime"
   )
@@ -97,8 +94,8 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: S
   // -----------------------------
   // COUNTERS
   // -----------------------------
-  const W = visitors.filter(v => v.effectiveStatus === "waiting").length
-  const A = visitors.filter(v => v.effectiveStatus === "active").length
+  const W = waitingVisitors.length
+  const A = activeNowVisitors.length
   const UZ = visitors.filter(v => v.effectiveStatus === "overtime").length
   const RT = A
   const TT = visitors.length
@@ -185,35 +182,53 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: S
             <div className="text-right">Aktion</div>
           </div>
 
-          {/* Rows */}
           <div className="space-y-2">
-            {activeVisitors.map(v => (
+
+            {/* WAITING (upper block) */}
+            {waitingVisitors.map(v => (
               <div
                 key={v.id}
                 className={`grid grid-cols-5 p-3 rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
-                <div>
-                  {v.effectiveStatus === "waiting" && "Warten"}
-                  {v.effectiveStatus === "active" && "Aktiv"}
-                </div>
-                <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
-
+                <div>Warten</div>
+                <div>-</div>
 
                 <div className="flex justify-end gap-2">
-                  {v.effectiveStatus === "waiting" && (
-                    <button onClick={() => onSetActive(room.id, v.id)}>
-                      <i className="fa-solid fa-arrow-right-to-bracket fa-2x"></i>
-                    </button>
-                  )}
+                  {/* ORIGINAL SET ACTIVE ICON */}
+                  <button onClick={() => onSetActive(room.id, v.id)}>
+                    <i className="fa-solid fa-arrow-right-to-bracket fa-2x"></i>
+                  </button>
 
+                  {/* ORIGINAL REMOVE ICON */}
                   <button onClick={() => onRemove(room.id, v.id)}>
                     <i className="fa-solid fa-arrow-right-from-bracket fa-2x"></i>
                   </button>
                 </div>
               </div>
             ))}
+
+            {/* ACTIVE (lower block) */}
+            {activeNowVisitors.map(v => (
+              <div
+                key={v.id}
+                className={`grid grid-cols-5 p-3 rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
+              >
+                <div>{v.id}</div>
+                <div>{v.name}</div>
+                <div>Aktiv</div>
+                <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
+
+                <div className="flex justify-end gap-2">
+                  {/* ORIGINAL REMOVE ICON */}
+                  <button onClick={() => onRemove(room.id, v.id)}>
+                    <i className="fa-solid fa-arrow-right-from-bracket fa-2x"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+
           </div>
         </div>
 
@@ -229,7 +244,6 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: S
             <div className="text-right">Aktion</div>
           </div>
 
-          {/* Rows */}
           <div className="space-y-2">
             {overtimeVisitors.map(v => (
               <div
@@ -238,9 +252,10 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: S
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
-                <div>{v.minutes}</div>
+                <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
 
                 <div className="flex justify-end">
+                  {/* ORIGINAL REMOVE ICON */}
                   <button onClick={() => onRemove(room.id, v.id)}>
                     <i className="fa-solid fa-arrow-right-from-bracket fa-2x"></i>
                   </button>

@@ -44,12 +44,13 @@ export default function App() {
         warnTime: 2,
         maxClients: 3
       },
-      visitors: [
-        { id: 5, name: "4", status: "waiting", startTime: null },
+      visitors: [ /*
+        { id: 5, name: "Johnathan", status: "waiting", startTime: null },
         { id: 3, name: "Jimmy", status: "active", startTime: Date.now() - 103 * 60000 },
         { id: 6, name: "jan", status: "active", startTime: Date.now() - 93 * 60000 },
         { id: 1, name: "John", status: "overtime", startTime: Date.now() - 2614 * 60000 },
         { id: 2, name: "Jane", status: "warn", startTime: Date.now() - 2610 * 60000 }
+         */
       ]
     },
     {
