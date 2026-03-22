@@ -184,7 +184,15 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
           className="border rounded px-3 py-2 flex-1"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (newName.trim().length === 0) return
+              onAddVisitor(room.id, newName.trim())
+              setNewName("")
+            }
+          }}
         />
+
 
         <button
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
