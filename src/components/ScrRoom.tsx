@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import type { Room } from "../App"
+import Swal from "sweetalert2"
 
 // -----------------------------
 // PURE HELPERS OUTSIDE COMPONENT
@@ -98,13 +99,21 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
   const W = waitingVisitors.length
   const A = activeNowVisitors.length
   const UZ = visitors.filter(v => v.effectiveStatus === "overtime").length
-  const RT = A
-  const TT = visitors.length
+  
+  const RT = visitors.filter(v =>
+    v.effectiveStatus === "active" ||
+    v.effectiveStatus === "warn" ||
+    v.effectiveStatus === "overtime"
+  ).length
+  
+  const TT = room.dailyTotal
+  
 
-  const occupancyText =
-    RT >= room.settings.maxClients
-      ? "Raumbelegung: Voll"
-      : `Raumbelegung: ${room.settings.maxClients - RT} freier Platz`
+  const free = room.settings.maxClients - RT
+  const occupancyText = free <= 0
+    ? "Raumbelegung: Voll"
+    : `Raumbelegung: ${free} freier Platz`
+  
 
   // -----------------------------
   // COLOR LOGIC
@@ -148,10 +157,24 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
       {/* Clear All */}
       <button
         className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 w-fit"
-        onClick={() => onClearVisitors(room.id)}
+        onClick={() => {
+          Swal.fire({
+            title: "Alle löschen?",
+            text: "Möchtest du wirklich alle Besucher entfernen?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ja, löschen",
+            cancelButtonText: "Abbrechen"
+          }).then(result => {
+            if (result.isConfirmed) {
+              onClearVisitors(room.id)
+            }
+          })
+        }}
       >
         Clear All
-      </button> 
+      </button>
+
 
       {/* Check-In */}
       <div className="flex gap-3 items-center mb-4">

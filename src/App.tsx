@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import ScrRoom from "./components/ScrRoom"
 import ScrSettings from "./components/ScrSettings"
 import TopBar from "./components/TopBar"
+import Swal from "sweetalert2"
 
 // TYPES
 export type VisitorStatus =
@@ -28,6 +29,7 @@ export type Room = {
   id: string
   settings: RoomSettings
   visitors: Visitor[]
+  dailyTotal: number
 }
 
 export default function App() {
@@ -47,7 +49,6 @@ export default function App() {
       const parsed = JSON.parse(saved)
       const today = new Date().toDateString()
 
-      // If saved data is from today → restore it
       if (parsed.date === today) {
         return parsed.rooms
       }
@@ -63,7 +64,8 @@ export default function App() {
           warnTime: 2,
           maxClients: 3
         },
-        visitors: []   // start empty each day
+        visitors: [],
+        dailyTotal: 0        // ← INITIALIZED HERE
       },
       {
         id: "roomB",
@@ -73,7 +75,8 @@ export default function App() {
           warnTime: 2,
           maxClients: 3
         },
-        visitors: []
+        visitors: [],
+        dailyTotal: 0        // ← INITIALIZED HERE
       }
     ]
   })
@@ -111,6 +114,18 @@ export default function App() {
     setRooms(prev =>
       prev.map(room => {
         if (room.id !== roomId) return room
+
+        const activeCount = room.visitors.filter(v => v.status === "active").length
+
+        if (activeCount >= room.settings.maxClients) {
+          Swal.fire({
+            icon: "warning",
+            title: "Raum voll",
+            text: "Es sind keine freien Plätze verfügbar.",
+            confirmButtonText: "OK"
+          })
+          return room
+        }
 
         return {
           ...room,
@@ -156,7 +171,8 @@ export default function App() {
 
         return {
           ...room,
-          visitors: [...room.visitors, newVisitor]
+          visitors: [...room.visitors, newVisitor],
+          dailyTotal: room.dailyTotal + 1   // ← INCREMENTED HERE
         }
       })
     )
@@ -171,7 +187,6 @@ export default function App() {
       )
     )
   }
-  
 
   // ---------------------------------------------------------
   // RENDER
