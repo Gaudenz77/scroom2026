@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ScrRoom from "./components/ScrRoom"
 import ScrSettings from "./components/ScrSettings"
 import TopBar from "./components/TopBar"
@@ -31,42 +31,69 @@ export type Room = {
 }
 
 export default function App() {
+
+  const STORAGE_KEY = "scrroom_rooms_v1"
+
   const [view, setView] = useState<"room" | "settings">("room")
   const [selectedRoomId, setSelectedRoomId] = useState("roomA")
 
-  // FIXED: lazy initializer to allow Date.now()
-  const [rooms, setRooms] = useState<Room[]>(() => [
-    {
-      id: "roomA",
-      settings: {
-        name: "Raucherraum",
-        maxStay: 3,
-        warnTime: 2,
-        maxClients: 3
-      },
-      visitors: [ /*
-        { id: 5, name: "Johnathan", status: "waiting", startTime: null },
-        { id: 3, name: "Jimmy", status: "active", startTime: Date.now() - 103 * 60000 },
-        { id: 6, name: "jan", status: "active", startTime: Date.now() - 93 * 60000 },
-        { id: 1, name: "John", status: "overtime", startTime: Date.now() - 2614 * 60000 },
-        { id: 2, name: "Jane", status: "warn", startTime: Date.now() - 2610 * 60000 }
-         */
-      ]
-    },
-    {
-      id: "roomB",
-      settings: {
-        name: "IV-Raum",
-        maxStay: 3,
-        warnTime: 2,
-        maxClients: 3
-      },
-      visitors: []
+  // ---------------------------------------------------------
+  // LOAD ROOMS (lazy initializer) — with daily reset
+  // ---------------------------------------------------------
+  const [rooms, setRooms] = useState<Room[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      const today = new Date().toDateString()
+
+      // If saved data is from today → restore it
+      if (parsed.date === today) {
+        return parsed.rooms
+      }
     }
-  ])
+
+    // Otherwise start fresh
+    return [
+      {
+        id: "roomA",
+        settings: {
+          name: "Raucherraum",
+          maxStay: 3,
+          warnTime: 2,
+          maxClients: 3
+        },
+        visitors: []   // start empty each day
+      },
+      {
+        id: "roomB",
+        settings: {
+          name: "IV-Raum",
+          maxStay: 3,
+          warnTime: 2,
+          maxClients: 3
+        },
+        visitors: []
+      }
+    ]
+  })
+
+  // ---------------------------------------------------------
+  // SAVE ROOMS TO LOCALSTORAGE WHENEVER THEY CHANGE
+  // ---------------------------------------------------------
+  useEffect(() => {
+    const today = new Date().toDateString()
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ date: today, rooms })
+    )
+  }, [rooms])
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId)!
 
+  // ---------------------------------------------------------
+  // UPDATE SETTINGS
+  // ---------------------------------------------------------
   function updateRoomSettings(roomId: string, newSettings: RoomSettings) {
     setRooms(prev =>
       prev.map(room =>
@@ -77,6 +104,9 @@ export default function App() {
     )
   }
 
+  // ---------------------------------------------------------
+  // VISITOR HANDLERS
+  // ---------------------------------------------------------
   function setVisitorActive(roomId: string, visitorId: number) {
     setRooms(prev =>
       prev.map(room => {
@@ -111,20 +141,19 @@ export default function App() {
     setRooms(prev =>
       prev.map(room => {
         if (room.id !== roomId) return room
-  
-        // auto-increment ID
+
         const nextId =
           room.visitors.length === 0
             ? 1
             : Math.max(...room.visitors.map(v => v.id)) + 1
-  
+
         const newVisitor = {
           id: nextId,
           name,
           status: "waiting" as const,
           startTime: null
         }
-  
+
         return {
           ...room,
           visitors: [...room.visitors, newVisitor]
@@ -132,8 +161,21 @@ export default function App() {
       })
     )
   }
+
+  function clearVisitors(roomId: string) {
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? { ...room, visitors: [] }
+          : room
+      )
+    )
+  }
   
 
+  // ---------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------
   return (
     <div className="w-full h-full flex flex-col">
 
@@ -151,6 +193,7 @@ export default function App() {
             onSetActive={setVisitorActive}
             onRemove={removeVisitor}
             onAddVisitor={addVisitor}
+            onClearVisitors={clearVisitors}
           />
         )}
 
@@ -166,77 +209,3 @@ export default function App() {
     </div>
   )
 }
-
-/*
-import { useState } from "react"
-import ScrRoom from "./components/ScrRoom"
-import ScrSettings from "./components/ScrSettings"
-import TopBar from "./components/TopBar"
-
-export default function App() {
-  const [view, setView] = useState<"room" | "settings">("room")
-
-  const [rooms] = useState([
-    { id: "roomA", name: "Raucherraum" },
-    { id: "roomB", name: "IV-Raum" }
-  ])
-
-  const [selectedRoomId, setSelectedRoomId] = useState("roomA")
-
-  return (
-    <div className="w-full h-full flex flex-col">
-
-      <TopBar
-        rooms={rooms}
-        selectedRoomId={selectedRoomId}
-        onSelectRoom={setSelectedRoomId}
-        onOpenSettings={() => setView("settings")}
-      />
-
-      <div className="flex-1">
-        {view === "room" && (
-          <ScrRoom roomId={selectedRoomId} />
-        )}
-
-        {view === "settings" && (
-          <ScrSettings
-            roomId={selectedRoomId}
-            onBack={() => setView("room")}
-          />
-        )}
-      </div>
-
-    </div>
-  )
-}
-
-
-/* 
-import ScrRoom from "./components/ScrRoom"
-import ScrSettings from "./components/ScrSettings"
-
-export default function App() {
-  const [view, setView] = useState<"room" | "settings">("room")
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-
-  return (
-    <div className="w-full h-full">
-      {view === "room" && (
-        <ScrRoom
-          onOpenSettings={(roomId) => {
-            setSelectedRoomId(roomId)
-            setView("settings")
-          }}
-        />
-      )}
-
-      {view === "settings" && (
-        <ScrSettings
-          roomId={selectedRoomId}
-          onBack={() => setView("room")}
-        />
-      )}
-    </div>
-  )
-}
-*/

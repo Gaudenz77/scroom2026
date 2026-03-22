@@ -41,9 +41,10 @@ type ScrRoomProps = {
   onSetActive: (roomId: string, visitorId: number) => void
   onRemove: (roomId: string, visitorId: number) => void
   onAddVisitor: (roomId: string, name: string) => void
+  onClearVisitors: (roomId: string) => void
 }
 
-export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: ScrRoomProps) {
+export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onClearVisitors }: ScrRoomProps) {
 
   // -----------------------------
   // TICKING CLOCK (PURE)
@@ -143,6 +144,14 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor }: S
 
       {/* Occupancy */}
       <div className="text-gray-700 font-medium">{occupancyText}</div>
+
+      {/* Clear All */}
+      <button
+        className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 w-fit"
+        onClick={() => onClearVisitors(room.id)}
+      >
+        Clear All
+      </button> 
 
       {/* Check-In */}
       <div className="flex gap-3 items-center mb-4">
