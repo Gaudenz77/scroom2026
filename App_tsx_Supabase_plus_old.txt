@@ -214,9 +214,22 @@ export default function App() {
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId)!
 
+  
+
   // ---------------------------------------------------------
   // UPDATE SETTINGS (LOCAL ONLY FOR NOW)
   // ---------------------------------------------------------
+  /*
+  function updateRoomSettings(roomId: string, newSettings: RoomSettings) {
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? { ...room, settings: newSettings }
+          : room
+      )
+    )
+  }
+  */
   async function updateRoomSettings(roomId: string, newSettings: RoomSettings) {
     // 1) Update Supabase
     const { error } = await supabase
@@ -247,7 +260,36 @@ export default function App() {
   // ---------------------------------------------------------
   // VISITOR HANDLERS (LOCAL ONLY FOR NOW)
   // ---------------------------------------------------------
- 
+  /*
+  function setVisitorActive(roomId: string, visitorId: number) {
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+
+        const activeCount = room.visitors.filter(v => v.status === "active").length
+
+        if (activeCount >= room.settings.maxClients) {
+          Swal.fire({
+            icon: "warning",
+            title: "Raum voll",
+            text: "Es sind keine freien Plätze verfügbar.",
+            confirmButtonText: "OK"
+          })
+          return room
+        }
+
+        return {
+          ...room,
+          visitors: room.visitors.map(v =>
+            v.id === visitorId
+              ? { ...v, status: "active", startTime: Date.now() }
+              : v
+          )
+        }
+      })
+    )
+  }
+  */
   async function setVisitorActive(roomId: string, visitorId: number) {
     // 1) Local update (instant UI)
     setRooms(prev =>
@@ -287,6 +329,20 @@ export default function App() {
       .eq("id", visitorId)
   }
   
+  /*
+  function removeVisitor(roomId: string, visitorId: number) {
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+
+        return {
+          ...room,
+          visitors: room.visitors.filter(v => v.id !== visitorId)
+        }
+      })
+    )
+  }
+  */
   async function removeVisitor(roomId: string, visitorId: number) {
     await supabase.from("visitors").delete().eq("id", visitorId)
   
@@ -302,6 +358,33 @@ export default function App() {
     )
   }
   
+  /*
+  function addVisitor(roomId: string, name: string) {
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+
+        const nextId =
+          room.visitors.length === 0
+            ? 1
+            : Math.max(...room.visitors.map(v => v.id)) + 1
+
+        const newVisitor = {
+          id: nextId,
+          name,
+          status: "waiting" as const,
+          startTime: null
+        }
+
+        return {
+          ...room,
+          visitors: [...room.visitors, newVisitor],
+          dailyTotal: room.dailyTotal + 1
+        }
+      })
+    )
+  }
+  */
   async function addVisitor(roomId: string, name: string) {
     // 1) Insert into Supabase
     const { data, error } = await supabase
@@ -344,7 +427,17 @@ export default function App() {
       )
     )
   }
-
+  /*
+  function clearVisitors(roomId: string) {
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? { ...room, visitors: [] }
+          : room
+      )
+    )
+  }
+  */
   async function clearVisitors(roomId: string) {
     await supabase.from("visitors").delete().eq("roomId", roomId)
   
