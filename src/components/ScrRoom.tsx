@@ -228,7 +228,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
             {waitingVisitors.map(v => (
               <div
                 key={v.id}
-                className={`grid grid-cols-5 p-3 h-16 rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
+                className={`grid grid-cols-5 p-3 h-16 text-sm rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
@@ -253,7 +253,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
             {activeNowVisitors.map(v => (
               <div
                 key={v.id}
-                className={`grid grid-cols-5 p-3 h-16 rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
+                className={`grid grid-cols-5 p-3 h-16 text-sm rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
@@ -288,7 +288,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
             {overtimeVisitors.map(v => (
               <div
                 key={v.id}
-                className={`grid grid-cols-4 p-3 h-16 rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
+                className={`grid grid-cols-4 p-3 h-16 text-sm rounded-b-full rounded-t-full border items-center ${getRowColor(v.effectiveStatus)}`}
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
