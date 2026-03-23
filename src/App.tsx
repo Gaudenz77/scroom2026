@@ -65,7 +65,9 @@ export default function App() {
                 id: v.id,
                 name: v.name,
                 status: v.status,
-                startTime: v.startTime
+                // startTime: v.startTime
+                startTime: v.startTime ? Number(v.startTime) : null
+
               }))
           : [],
         dailyTotal: room.dailyTotal
