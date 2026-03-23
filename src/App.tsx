@@ -3,6 +3,7 @@ import ScrRoom from "./components/ScrRoom"
 import ScrSettings from "./components/ScrSettings"
 import TopBar from "./components/TopBar"
 import Swal from "sweetalert2"
+import { supabase } from "./supabaseClient"   // ← ADDED
 
 // TYPES
 export type VisitorStatus =
@@ -34,69 +35,58 @@ export type Room = {
 
 export default function App() {
 
-  const STORAGE_KEY = "scrroom_rooms_v1"
-
   const [view, setView] = useState<"room" | "settings">("room")
   const [selectedRoomId, setSelectedRoomId] = useState("roomA")
 
   // ---------------------------------------------------------
-  // LOAD ROOMS (lazy initializer) — with daily reset
+  // LOAD ROOMS + VISITORS FROM SUPABASE
   // ---------------------------------------------------------
-  const [rooms, setRooms] = useState<Room[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
+  const [rooms, setRooms] = useState<Room[]>([])
 
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      const today = new Date().toDateString()
+  useEffect(() => {
+    const loadData = async () => {
+      const { data: roomsData } = await supabase.from("rooms").select("*")
+      const { data: visitorsData } = await supabase.from("visitors").select("*")
 
-      if (parsed.date === today) {
-        return parsed.rooms
-      }
+      if (!roomsData) return
+
+      const merged: Room[] = roomsData.map(room => ({
+        id: room.id,
+        settings: {
+          name: room.name,
+          maxStay: room.maxStay,
+          warnTime: room.warnTime,
+          maxClients: room.maxClients
+        },
+        visitors: visitorsData
+          ? visitorsData
+              .filter(v => v.roomId === room.id)
+              .map(v => ({
+                id: v.id,
+                name: v.name,
+                status: v.status,
+                startTime: v.startTime
+              }))
+          : [],
+        dailyTotal: room.dailyTotal
+      }))
+
+      setRooms(merged)
     }
 
-    // Otherwise start fresh
-    return [
-      {
-        id: "roomA",
-        settings: {
-          name: "Raucherraum",
-          maxStay: 3,
-          warnTime: 2,
-          maxClients: 3
-        },
-        visitors: [],
-        dailyTotal: 0        // ← INITIALIZED HERE
-      },
-      {
-        id: "roomB",
-        settings: {
-          name: "IV-Raum",
-          maxStay: 3,
-          warnTime: 2,
-          maxClients: 3
-        },
-        visitors: [],
-        dailyTotal: 0        // ← INITIALIZED HERE
-      }
-    ]
-  })
+    loadData()
+  }, [])
 
-  // ---------------------------------------------------------
-  // SAVE ROOMS TO LOCALSTORAGE WHENEVER THEY CHANGE
-  // ---------------------------------------------------------
-  useEffect(() => {
-    const today = new Date().toDateString()
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ date: today, rooms })
-    )
-  }, [rooms])
+  if (rooms.length === 0) {
+    return <div className="p-4 text-white">Loading…</div>
+  }
 
   const selectedRoom = rooms.find(r => r.id === selectedRoomId)!
 
   // ---------------------------------------------------------
-  // UPDATE SETTINGS
+  // UPDATE SETTINGS (LOCAL ONLY FOR NOW)
   // ---------------------------------------------------------
+  /*
   function updateRoomSettings(roomId: string, newSettings: RoomSettings) {
     setRooms(prev =>
       prev.map(room =>
@@ -106,10 +96,38 @@ export default function App() {
       )
     )
   }
-
+  */
+  async function updateRoomSettings(roomId: string, newSettings: RoomSettings) {
+    // 1) Update Supabase
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        name: newSettings.name,
+        maxStay: newSettings.maxStay,
+        warnTime: newSettings.warnTime,
+        maxClients: newSettings.maxClients
+      })
+      .eq("id", roomId)
+  
+    if (error) {
+      console.error("Settings update error:", error)
+      return
+    }
+  
+    // 2) Update local state
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? { ...room, settings: newSettings }
+          : room
+      )
+    )
+  }
+  
   // ---------------------------------------------------------
-  // VISITOR HANDLERS
+  // VISITOR HANDLERS (LOCAL ONLY FOR NOW)
   // ---------------------------------------------------------
+  /*
   function setVisitorActive(roomId: string, visitorId: number) {
     setRooms(prev =>
       prev.map(room => {
@@ -138,7 +156,47 @@ export default function App() {
       })
     )
   }
-
+  */
+  async function setVisitorActive(roomId: string, visitorId: number) {
+    // 1) Local update (instant UI)
+    setRooms(prev =>
+      prev.map(room => {
+        if (room.id !== roomId) return room
+  
+        const activeCount = room.visitors.filter(v => v.status === "active").length
+  
+        if (activeCount >= room.settings.maxClients) {
+          Swal.fire({
+            icon: "warning",
+            title: "Raum voll",
+            text: "Es sind keine freien Plätze verfügbar.",
+            confirmButtonText: "OK"
+          })
+          return room
+        }
+  
+        return {
+          ...room,
+          visitors: room.visitors.map(v =>
+            v.id === visitorId
+              ? { ...v, status: "active", startTime: Date.now() }
+              : v
+          )
+        }
+      })
+    )
+  
+    // 2) Supabase update
+    await supabase
+      .from("visitors")
+      .update({
+        status: "active",
+        startTime: Date.now()
+      })
+      .eq("id", visitorId)
+  }
+  
+  /*
   function removeVisitor(roomId: string, visitorId: number) {
     setRooms(prev =>
       prev.map(room => {
@@ -151,7 +209,23 @@ export default function App() {
       })
     )
   }
-
+  */
+  async function removeVisitor(roomId: string, visitorId: number) {
+    await supabase.from("visitors").delete().eq("id", visitorId)
+  
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? {
+              ...room,
+              visitors: room.visitors.filter(v => v.id !== visitorId)
+            }
+          : room
+      )
+    )
+  }
+  
+  /*
   function addVisitor(roomId: string, name: string) {
     setRooms(prev =>
       prev.map(room => {
@@ -172,12 +246,55 @@ export default function App() {
         return {
           ...room,
           visitors: [...room.visitors, newVisitor],
-          dailyTotal: room.dailyTotal + 1   // ← INCREMENTED HERE
+          dailyTotal: room.dailyTotal + 1
         }
       })
     )
   }
-
+  */
+  async function addVisitor(roomId: string, name: string) {
+    // 1) Insert into Supabase
+    const { data, error } = await supabase
+      .from("visitors")
+      .insert([
+        {
+          roomId,
+          name,
+          status: "waiting",
+          startTime: null
+        }
+      ])
+      .select()
+  
+    if (error) {
+      console.error("Insert error:", error)
+      return
+    }
+  
+    const inserted = data![0]
+  
+    // 2) Update local state
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? {
+              ...room,
+              visitors: [
+                ...room.visitors,
+                {
+                  id: inserted.id,
+                  name: inserted.name,
+                  status: inserted.status,
+                  startTime: inserted.startTime
+                }
+              ],
+              dailyTotal: room.dailyTotal + 1
+            }
+          : room
+      )
+    )
+  }
+  /*
   function clearVisitors(roomId: string) {
     setRooms(prev =>
       prev.map(room =>
@@ -187,7 +304,19 @@ export default function App() {
       )
     )
   }
-
+  */
+  async function clearVisitors(roomId: string) {
+    await supabase.from("visitors").delete().eq("roomId", roomId)
+  
+    setRooms(prev =>
+      prev.map(room =>
+        room.id === roomId
+          ? { ...room, visitors: [] }
+          : room
+      )
+    )
+  }
+  
   // ---------------------------------------------------------
   // RENDER
   // ---------------------------------------------------------
@@ -214,13 +343,12 @@ export default function App() {
 
         {view === "settings" && (
           <ScrSettings
-            key={selectedRoomId}   // ← THIS forces a fresh mount on room change
+            key={selectedRoomId}
             room={selectedRoom}
             onSave={updateRoomSettings}
             onBack={() => setView("room")}
           />
         )}
-
       </div>
 
     </div>
