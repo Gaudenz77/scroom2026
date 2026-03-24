@@ -304,7 +304,7 @@ export default function App() {
   
   async function addVisitor(roomId: string, name: string) {
     // 1) Insert into Supabase
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("visitors")
       .insert([
         {
@@ -320,29 +320,6 @@ export default function App() {
       console.error("Insert error:", error)
       return
     }
-  
-    const inserted = data![0]
-  
-    // 2) Update local state
-    setRooms(prev =>
-      prev.map(room =>
-        room.id === roomId
-          ? {
-              ...room,
-              visitors: [
-                ...room.visitors,
-                {
-                  id: inserted.id,
-                  name: inserted.name,
-                  status: inserted.status,
-                  startTime: inserted.startTime
-                }
-              ],
-              dailyTotal: room.dailyTotal + 1
-            }
-          : room
-      )
-    )
   }
 
   async function clearVisitors(roomId: string) {

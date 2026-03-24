@@ -14,7 +14,9 @@ function computeMinutes(now: number, startTime: number | null) {
 function formatMinSec(minutes: number | null, now: number, startTime: number | null) {
   if (startTime == null) return "-"
 
-  const diffMs = now - startTime
+  let diffMs = now - startTime
+  if (diffMs < 0) diffMs = 0   // ← FIX: clamp negative values
+
   const totalSeconds = Math.floor(diffMs / 1000)
 
   const m = Math.floor(totalSeconds / 60)
@@ -30,7 +32,10 @@ function deriveStatus(
   maxStay: number
 ): "waiting" | "active" | "warn" | "overtime" {
   if (baseStatus === "waiting") return "waiting"
-  if (minutes == null) return "active"
+
+  // NEW: if no startTime yet → still waiting
+  if (minutes == null) return "waiting"
+  
 
   if (minutes >= maxStay) return "overtime"
   if (minutes >= warnTime) return "warn"
