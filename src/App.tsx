@@ -101,7 +101,44 @@ export default function App() {
   // REALTIME LISTENER (SUPABASE)  ← MUST BE BEFORE RETURN
   // ---------------------------------------------------------
   useEffect(() => {
-    // --- ROOMS realtime ---
+    //
+    // 1) INITIAL LOAD
+    //
+    const loadData = async () => {
+      const { data: roomsData } = await supabase.from("rooms").select("*")
+      const { data: visitorsData } = await supabase.from("visitors").select("*")
+  
+      if (!roomsData) return
+  
+      const merged: Room[] = roomsData.map(room => ({
+        id: room.id,
+        settings: {
+          name: room.name,
+          maxStay: room.maxStay,
+          warnTime: room.warnTime,
+          maxClients: room.maxClients
+        },
+        visitors: visitorsData
+          ? visitorsData
+              .filter(v => v.roomId === room.id)
+              .map(v => ({
+                id: v.id,
+                name: v.name,
+                status: v.status,
+                startTime: v.startTime ? Number(v.startTime) : null
+              }))
+          : [],
+        dailyTotal: room.dailyTotal
+      }))
+  
+      setRooms(merged)
+    }
+  
+    loadData()
+  
+    //
+    // 2) REALTIME ROOMS
+    //
     const roomsChannel = supabase
       .channel("rooms-changes")
       .on(
@@ -109,7 +146,7 @@ export default function App() {
         { event: "*", schema: "public", table: "rooms" },
         payload => {
           const updated = payload.new as RoomRow
-
+  
           setRooms(prev =>
             prev.map(room =>
               room.id === updated.id
@@ -129,68 +166,90 @@ export default function App() {
         }
       )
       .subscribe()
-
-    // --- VISITORS realtime ---
+  
+    //
+    // 3) REALTIME VISITORS
+    //
     const visitorsChannel = supabase
       .channel("visitors-changes")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "visitors" },
         payload => {
-          const row = payload.new as VisitorRow
-          const old = payload.old as VisitorRow
-
+          console.log("EVENT:", payload.eventType)
+          console.log("PAYLOAD:", payload)
+  
           setRooms(prev => {
-            const next = [...prev]
-
             switch (payload.eventType) {
-              case "INSERT":
-                return next.map(room =>
-                  room.id === row.roomId
+              //
+              // INSERT
+              //
+              case "INSERT": {
+                const inserted = payload.new as VisitorRow
+                return prev.map(room =>
+                  room.id === inserted.roomId
                     ? {
                         ...room,
                         visitors: [
                           ...room.visitors,
                           {
-                            id: row.id,
-                            name: row.name,
-                            status: row.status,
-                            startTime: row.startTime ? Number(row.startTime) : null
+                            id: inserted.id,
+                            name: inserted.name,
+                            status: inserted.status,
+                            startTime: inserted.startTime
+                              ? Number(inserted.startTime)
+                              : null
                           }
                         ]
                       }
                     : room
                 )
-
-              case "UPDATE":
-                return next.map(room =>
-                  room.id === row.roomId
+              }
+  
+              //
+              // UPDATE
+              //
+              case "UPDATE": {
+                const updated = payload.new as VisitorRow
+                return prev.map(room =>
+                  room.id === updated.roomId
                     ? {
                         ...room,
                         visitors: room.visitors.map(v =>
-                          v.id === row.id
+                          v.id === updated.id
                             ? {
-                                id: row.id,
-                                name: row.name,
-                                status: row.status,
-                                startTime: row.startTime ? Number(row.startTime) : null
+                                id: updated.id,
+                                name: updated.name,
+                                status: updated.status,
+                                startTime: updated.startTime
+                                  ? Number(updated.startTime)
+                                  : null
                               }
                             : v
                         )
                       }
                     : room
                 )
-
-              case "DELETE":
-                return next.map(room =>
-                  room.id === old.roomId
+              }
+  
+              //
+              // DELETE
+              //
+              case "DELETE": {
+                const deleted = payload.old as VisitorRow
+                return prev.map(room =>
+                  room.id === deleted.roomId
                     ? {
                         ...room,
-                        visitors: room.visitors.filter(v => v.id !== old.id)
+                        visitors: room.visitors.filter(v => v.id !== deleted.id)
                       }
                     : room
                 )
-
+              }
+  
+              //
+              // DEFAULT
+              //
               default:
                 return prev
             }
@@ -198,12 +257,16 @@ export default function App() {
         }
       )
       .subscribe()
-
+  
+    //
+    // 4) CLEANUP
+    //
     return () => {
       supabase.removeChannel(roomsChannel)
       supabase.removeChannel(visitorsChannel)
     }
   }, [])
+
 
   // ---------------------------------------------------------
   // NOW the loading guard is safe
@@ -289,17 +352,6 @@ export default function App() {
   
   async function removeVisitor(roomId: string, visitorId: number) {
     await supabase.from("visitors").delete().eq("id", visitorId)
-  
-    setRooms(prev =>
-      prev.map(room =>
-        room.id === roomId
-          ? {
-              ...room,
-              visitors: room.visitors.filter(v => v.id !== visitorId)
-            }
-          : room
-      )
-    )
   }
   
   async function addVisitor(roomId: string, name: string) {
