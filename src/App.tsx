@@ -362,7 +362,7 @@ export default function App() {
   async function removeVisitor(roomId: string, visitorId: number) {
     await supabase.from("visitors").delete().eq("id", visitorId)
   }
-  
+  /*
   async function addVisitor(roomId: string, name: string) {
     // 1) Insert into Supabase
     const { error } = await supabase
@@ -381,6 +381,29 @@ export default function App() {
       console.error("Insert error:", error)
       return
     }
+  }
+  */
+  async function addVisitor(roomId: string, name: string) {
+  // 1) Insert visitor
+  const { error } = await supabase
+    .from("visitors")
+    .insert([
+      {
+        roomId,
+        name,
+        status: "waiting",
+        startTime: null
+      }
+    ])
+    .select()
+
+    if (error) {
+      console.error("Insert error:", error)
+      return
+    }
+
+    // 2) Increment dailyTotal atomically
+    await supabase.rpc("increment_daily_total", { room_id: roomId })
   }
 
   async function clearVisitors(roomId: string) {
