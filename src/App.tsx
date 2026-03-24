@@ -311,6 +311,43 @@ export default function App() {
   // VISITOR HANDLERS (LOCAL ONLY FOR NOW)
   // ---------------------------------------------------------
   async function setVisitorActive(roomId: string, visitorId: number) {
+    console.log("Activating visitor", { roomId, visitorId })
+  
+    const { data, error } = await supabase.rpc(
+      "activate_visitor_if_space",
+      {
+        room_id: roomId,
+        visitor_id: visitorId
+      }
+    )
+  
+    console.log("RPC result:", { data, error })
+  
+    if (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Activation failed",
+        text: "Backend RPC returned an error. Check console.",
+        confirmButtonText: "OK"
+      })
+      return
+    }
+  
+    if (data === "full") {
+      Swal.fire({
+        icon: "warning",
+        title: "Room full",
+        text: "No free spaces available.",
+        confirmButtonText: "OK"
+      })
+      return
+    }
+  
+    // If data === "ok", realtime will update the UI automatically.
+  }
+  
+  /*
+  async function setVisitorActive(roomId: string, visitorId: number) {
     let blocked = false
   
     // 1) Local update (instant UI)
@@ -358,7 +395,7 @@ export default function App() {
       })
       .eq("id", visitorId)
   }
-  
+  */
   async function removeVisitor(roomId: string, visitorId: number) {
     await supabase.from("visitors").delete().eq("id", visitorId)
   }
