@@ -310,22 +310,28 @@ export default function App() {
   // ---------------------------------------------------------
   // VISITOR HANDLERS (LOCAL ONLY FOR NOW)
   // ---------------------------------------------------------
- 
   async function setVisitorActive(roomId: string, visitorId: number) {
+    let blocked = false
+  
     // 1) Local update (instant UI)
     setRooms(prev =>
       prev.map(room => {
         if (room.id !== roomId) return room
   
-        const activeCount = room.visitors.filter(v => v.status === "active").length
+        const occupiedCount = room.visitors.filter(v =>
+          v.status === "active" ||
+          v.status === "warn" ||
+          v.status === "overtime"
+        ).length
   
-        if (activeCount >= room.settings.maxClients) {
+        if (occupiedCount >= room.settings.maxClients) {
           Swal.fire({
             icon: "warning",
             title: "Raum voll",
             text: "Es sind keine freien Plätze verfügbar.",
             confirmButtonText: "OK"
           })
+          blocked = true
           return room
         }
   
@@ -340,7 +346,10 @@ export default function App() {
       })
     )
   
-    // 2) Supabase update
+    // 2) If blocked → DO NOT update Supabase
+    if (blocked) return
+  
+    // 3) Supabase update
     await supabase
       .from("visitors")
       .update({
