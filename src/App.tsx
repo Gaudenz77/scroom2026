@@ -343,59 +343,9 @@ export default function App() {
       return
     }
   
-    // If data === "ok", realtime will update the UI automatically.
   }
   
-  /*
-  async function setVisitorActive(roomId: string, visitorId: number) {
-    let blocked = false
-  
-    // 1) Local update (instant UI)
-    setRooms(prev =>
-      prev.map(room => {
-        if (room.id !== roomId) return room
-  
-        const occupiedCount = room.visitors.filter(v =>
-          v.status === "active" ||
-          v.status === "warn" ||
-          v.status === "overtime"
-        ).length
-  
-        if (occupiedCount >= room.settings.maxClients) {
-          Swal.fire({
-            icon: "warning",
-            title: "Raum voll",
-            text: "Es sind keine freien Plätze verfügbar.",
-            confirmButtonText: "OK"
-          })
-          blocked = true
-          return room
-        }
-  
-        return {
-          ...room,
-          visitors: room.visitors.map(v =>
-            v.id === visitorId
-              ? { ...v, status: "active", startTime: Date.now() }
-              : v
-          )
-        }
-      })
-    )
-  
-    // 2) If blocked → DO NOT update Supabase
-    if (blocked) return
-  
-    // 3) Supabase update
-    await supabase
-      .from("visitors")
-      .update({
-        status: "active",
-        startTime: Date.now()
-      })
-      .eq("id", visitorId)
-  }
-  */
+
   async function removeVisitor(roomId: string, visitorId: number) {
     await supabase.from("visitors").delete().eq("id", visitorId)
   }

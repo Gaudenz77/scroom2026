@@ -16,6 +16,129 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
   const [warnTime, setWarnTime] = useState(room.settings.warnTime)
 
   const handleSave = () => {
+    onSave(room.id, { name, maxStay, maxClients, warnTime })
+
+    Swal.fire({
+      icon: "success",
+      title: "Erfolgreich gespeichert",
+      text: "Die Raumdaten wurden aktualisiert.",
+      confirmButtonText: "OK"
+    }).then(() => onBack())
+  }
+
+  return (
+    <div className="w-full h-full p-6 flex flex-col gap-6">
+
+      <h1 className="text-2xl font-bold text-base-content">
+        Einstellungen – {room.settings.name}
+      </h1>
+
+      <div className="flex gap-10 flex-1">
+
+        {/* LEFT: Settings form */}
+        <div className="w-2/3 space-y-6">
+
+          <h2 className="text-xl font-bold text-base-content">Einstellungen</h2>
+
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-base-content">Name des Raumes</label>
+            <input
+              className="input input-bordered"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-base-content">
+              Maximale Nutzungsdauer (Minuten)
+            </label>
+            <input
+              type="number"
+              className="input input-bordered"
+              value={maxStay}
+              onChange={(e) => setMaxStay(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-base-content">
+              Maximale Anzahl der Personen
+            </label>
+            <input
+              type="number"
+              className="input input-bordered"
+              value={maxClients}
+              onChange={(e) => setMaxClients(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="font-medium mb-1 text-base-content">Warnzeit</label>
+            <input
+              type="number"
+              className="input input-bordered"
+              value={warnTime}
+              onChange={(e) => setWarnTime(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button
+              onClick={onBack}
+              className="btn btn-ghost"
+            >
+              Abbrechen
+            </button>
+
+            <button
+              onClick={handleSave}
+              className="btn btn-primary"
+            >
+              Speichern
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT: Legend */}
+        <div className="w-1/3">
+          <h2 className="text-xl font-bold mb-3 text-base-content">Legende</h2>
+
+          <div className="space-y-2 text-base-content">
+            <div><strong>W:</strong> Warten</div>
+            <div><strong>A:</strong> Aktiv</div>
+            <div><strong>ÜZ:</strong> Über Zeit</div>
+            <div><strong>RT:</strong> Raum Total</div>
+            <div><strong>TT:</strong> Tages Total</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+/*
+// WITHOUT THEME DAISYUI
+
+import { useState } from "react"
+import Swal from "sweetalert2"
+import type { Room, RoomSettings } from "../App"
+
+type ScrSettingsProps = {
+  room: Room
+  onSave: (roomId: string, newSettings: RoomSettings) => void
+  onBack: () => void
+}
+
+export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) {
+
+  const [name, setName] = useState(room.settings.name)
+  const [maxStay, setMaxStay] = useState(room.settings.maxStay)
+  const [maxClients, setMaxClients] = useState(room.settings.maxClients)
+  const [warnTime, setWarnTime] = useState(room.settings.warnTime)
+
+  const handleSave = () => {
     onSave(room.id, {
       name,
       maxStay,
@@ -42,7 +165,7 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
 
       <div className="flex gap-10 flex-1">
 
-        {/* LEFT: Settings form */}
+         // LEFT: Settings form   
         <div className="w-2/3 space-y-6">
 
           <h2 className="text-xl font-bold">Einstellungen</h2>
@@ -103,7 +226,7 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
           </div>
         </div>
 
-        {/* RIGHT: Legend */}
+         // RIGHT: Legend   
         <div className="w-1/3">
           <h2 className="text-xl font-bold mb-3">Legende</h2>
 
@@ -120,3 +243,4 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
     </div>
   )
 }
+*/
