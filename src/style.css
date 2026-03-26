@@ -1,5 +1,33 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  include: input, select, textarea, checkbox, radio, toggle, button, alert, badge, breadcrumb, card, carousel, dropdown, menu, modal, navbar, pagination, popover, progress, tooltip;
+  include: input, select, textarea, scrollbar, checkbox, radio, toggle, button, alert, badge, breadcrumb, card, carousel, dropdown, menu, modal, navbar, pagination, popover, progress, tooltip;
   themes: all;
 }
+
+/* Custom theme-specific color classes (like Tailwind's color utilities but using DaisyUI theme colors) */
+
+/* Text colors using each theme's primary color */
+.text-light { color: #570df8; }
+.text-dark { color: #793ef9; }
+.text-cupcake { color: #65c3c8; }
+.text-cyberpunk { color: #ff7598; }
+.text-dracula { color: #ff79c6; }
+.text-synthwave { color: #ff007f; }
+.text-valentine { color: #e96d7b; }
+.text-halloween { color: #f28c18; }
+.text-garden { color: #5c7f67; }
+.text-forest { color: #1eb854; }
+.text-winter { color: #047aff; }
+
+/* Background colors using each theme's base-100 color */
+.bg-light { background-color: #ffffff; }
+.bg-dark { background-color: #1f2937; }
+.bg-cupcake { background-color: #faf7f5; }
+.bg-cyberpunk { background-color: #fffffe; }
+.bg-dracula { background-color: #282a36; }
+.bg-synthwave { background-color: #2a1b3d; }
+.bg-valentine { background-color: #f5f5f5; }
+.bg-halloween { background-color: #212121; }
+.bg-garden { background-color: #e9e7e7; }
+.bg-forest { background-color: #171212; }
+.bg-winter { background-color: #ffffff; }

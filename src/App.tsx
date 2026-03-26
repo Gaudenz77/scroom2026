@@ -389,7 +389,7 @@ export default function App() {
   // RENDER
   // ---------------------------------------------------------
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="min-h-screen w-full flex flex-col bg-base-100 text-base-content">
 
       <TopBar
         rooms={rooms.map(r => ({ id: r.id, name: r.settings.name }))}
