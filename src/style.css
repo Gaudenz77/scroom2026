@@ -6,6 +6,7 @@
 
 /* Custom theme-specific color classes (like Tailwind's color utilities but using DaisyUI theme colors) */
 
+
 /* Text colors using each theme's primary color */
 .text-light { color: #570df8; }
 .text-dark { color: #793ef9; }
@@ -31,3 +32,4 @@
 .bg-garden { background-color: #e9e7e7; }
 .bg-forest { background-color: #171212; }
 .bg-winter { background-color: #ffffff; }
+
