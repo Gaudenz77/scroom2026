@@ -117,7 +117,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
 
       {/* Clear All */}
       <button
-        className="btn btn-error w-fit"
+        className="btn btn-outline btn-error w-fit"
         onClick={() => {
           Swal.fire({
             title: "Alle löschen?",
@@ -151,7 +151,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
         />
 
         <button
-          className="btn btn-success"
+          className="btn btn-outline btn-success"
           onClick={() => {
             if (!newName.trim()) return
             onAddVisitor(room.id, newName.trim())

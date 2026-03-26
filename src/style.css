@@ -1,5 +1,5 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  include: input, select;
-  themes: light --default, dark --prefersdark, cupcake, cyberpunk, dracula, synthwave, valentine, halloween, garden, forest, winter;
+  include: input, select, textarea, checkbox, radio, toggle, button, alert, badge, breadcrumb, card, carousel, dropdown, menu, modal, navbar, pagination, popover, progress, tooltip;
+  themes: all;
 }
