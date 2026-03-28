@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, /*useLayoutEffect*/ } from "react"
 import type { Room } from "../App"
 import Swal from "sweetalert2"
+// import { gsap } from "gsap"
+import 'animate.css';
 
 // -----------------------------
 // PURE HELPERS OUTSIDE COMPONENT
@@ -69,7 +71,20 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
   const waitingVisitors = visitors.filter(v => v.effectiveStatus === "waiting")
   const activeNowVisitors = visitors.filter(v => v.effectiveStatus === "active")
   const overtimeVisitors = visitors.filter(v => v.effectiveStatus === "warn" || v.effectiveStatus === "overtime")
+  // animate css
+  const [removingIds, setRemovingIds] = useState<number[]>([])
 
+  /*
+  useLayoutEffect(() => {
+    gsap.from(".visitor-row", {
+      opacity: 0,
+      y: -10,
+      duration: 0.25,
+      ease: "power2.out",
+      stagger: 0.03
+    })
+  }, [room.visitors])
+  */
   const W = waitingVisitors.length
   const A = activeNowVisitors.length
   const UZ = visitors.filter(v => v.effectiveStatus === "overtime").length
@@ -182,7 +197,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
             {waitingVisitors.map(v => (
               <div
                 key={v.id}
-                className={`grid grid-cols-5 p-3 h-16 text-sm   border border-base-300 items-center ${getRowColor(v.effectiveStatus)}`}
+                className={`  grid grid-cols-5 p-3 h-16 text-sm   border border-base-300 items-center animate__animated animate__backInLeft ${getRowColor(v.effectiveStatus)}`}
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
@@ -204,7 +219,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
             {activeNowVisitors.map(v => (
               <div
                 key={v.id}
-                className={`grid grid-cols-5 p-3 h-16 text-sm   border border-base-300 items-center ${getRowColor(v.effectiveStatus)}`}
+                className={`  grid grid-cols-5 p-3 h-16 text-sm   border border-base-300 items-center animate__animated animate__backInRight ${getRowColor(v.effectiveStatus)}`}
               >
                 <div>{v.id}</div>
                 <div>{v.name}</div>
@@ -226,7 +241,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
         <div className="w-1/2">
           <h2 className="text-xl font-bold mb-2 text-base-content">Überzeit</h2>
 
-          <div className="grid grid-cols-4 font-semibold border-b border-base-300 pb-1 mb-2 text-base-content">
+          <div className="   grid grid-cols-4 font-semibold border-b border-base-300 pb-1 mb-2 text-base-content">
             <div>No</div>
             <div>Name</div>
             <div>Min</div>

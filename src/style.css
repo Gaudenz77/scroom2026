@@ -33,3 +33,9 @@
 .bg-forest { background-color: #171212; }
 .bg-winter { background-color: #ffffff; }
 
+
+.swal2-popup {
+  border-radius: 0px !important; /* Adjust as needed */
+}
+
+
