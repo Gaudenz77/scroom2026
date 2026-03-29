@@ -236,7 +236,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
             key={v.id}
             className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
               animate__animated
-              ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInRight"}
+              ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
               ${getRowColor(v.effectiveStatus)}
             `}
           >
