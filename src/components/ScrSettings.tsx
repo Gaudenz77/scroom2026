@@ -26,22 +26,27 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
     }).then(() => onBack())
   }
 
-  return (
-    <div className="w-full h-full p-6 flex flex-col gap-6">
+return (
+  <div className="w-full h-full p-6 flex flex-col gap-6">
 
-      <h1 className="text-2xl font-bold text-base-content">
-        Einstellungen – {room.settings.name}
-      </h1>
+    {/* Title */}
+    <h1 className="text-2xl font-bold text-base-content">
+      Einstellungen – {room.settings.name}
+    </h1>
 
-      <div className="flex gap-10 flex-1">
+    <div className="flex gap-8 flex-1">
 
-        {/* LEFT: Settings form */}
-        <div className="w-2/3 space-y-6">
+      {/* LEFT: Settings Card */}
+      <div className="w-2/3">
+        <div className="card bg-base-200 shadow-md p-6 space-y-6">
 
-          <h2 className="text-xl font-bold text-base-content">Einstellungen</h2>
+          <h2 className="text-xl font-bold text-base-content">Raum-Einstellungen</h2>
 
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-base-content">Name des Raumes</label>
+          {/* Name */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-base-content">Name des Raumes</span>
+            </label>
             <input
               className="input input-bordered"
               value={name}
@@ -49,32 +54,44 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
             />
           </div>
 
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-base-content">
-              Maximale Nutzungsdauer (Minuten)
-            </label>
-            <input
-              type="number"
-              className="input input-bordered"
-              value={maxStay}
-              onChange={(e) => setMaxStay(Number(e.target.value))}
-            />
+          {/* Max Stay + Max Clients */}
+          <div className="grid grid-cols-2 gap-6">
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base-content">
+                  Maximale Nutzungsdauer (Minuten)
+                </span>
+              </label>
+              <input
+                type="number"
+                className="input input-bordered"
+                value={maxStay}
+                onChange={(e) => setMaxStay(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-base-content">
+                  Maximale Anzahl der Personen
+                </span>
+              </label>
+              <input
+                type="number"
+                className="input input-bordered"
+                value={maxClients}
+                onChange={(e) => setMaxClients(Number(e.target.value))}
+              />
+            </div>
+
           </div>
 
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-base-content">
-              Maximale Anzahl der Personen
+          {/* Warn Time */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-base-content">Warnzeit (Minuten)</span>
             </label>
-            <input
-              type="number"
-              className="input input-bordered"
-              value={maxClients}
-              onChange={(e) => setMaxClients(Number(e.target.value))}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-base-content">Warnzeit</label>
             <input
               type="number"
               className="input input-bordered"
@@ -83,25 +100,23 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
             />
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-4 pt-4">
-            <button
-              onClick={onBack}
-              className="btn btn-ghost"
-            >
+            <button onClick={onBack} className="btn btn-ghost">
               Abbrechen
             </button>
 
-            <button
-              onClick={handleSave}
-              className="btn btn-primary"
-            >
+            <button onClick={handleSave} className="btn btn-primary">
               Speichern
             </button>
           </div>
-        </div>
 
-        {/* RIGHT: Legend */}
-        <div className="w-1/3">
+        </div>
+      </div>
+
+      {/* RIGHT: Legend Card */}
+      <div className="w-1/3">
+        <div className="card bg-base-200 shadow-md p-6">
           <h2 className="text-xl font-bold mb-3 text-base-content">Legende</h2>
 
           <div className="space-y-2 text-base-content">
@@ -112,10 +127,12 @@ export default function ScrSettings({ room, onSave, onBack }: ScrSettingsProps) 
             <div><strong>TT:</strong> Tages Total</div>
           </div>
         </div>
-
       </div>
+
     </div>
-  )
+  </div>
+)
+
 }
 
 /*

@@ -337,7 +337,7 @@ export default function App() {
       Swal.fire({
         icon: "warning",
         title: "Room full",
-        background: "#fff248",
+        /*background: "#fff248",*/
         confirmButtonColor: "#ff0011",
         text: "No free spaces available.",
         confirmButtonText: "OK"
