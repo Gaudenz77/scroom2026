@@ -1,7 +1,6 @@
-import { useEffect, useState, /*useLayoutEffect*/ } from "react"
+import { useEffect, useState } from "react"
 import type { Room } from "../App"
 import Swal from "sweetalert2"
-// import { gsap } from "gsap"
 import 'animate.css';
 
 // -----------------------------
@@ -57,6 +56,9 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
 
   const [newName, setNewName] = useState("")
 
+  // -----------------------------
+  // VISITOR DERIVATION
+  // -----------------------------
   const visitors = room.visitors.map(v => {
     const minutes = computeMinutes(now, v.startTime)
     const effectiveStatus = deriveStatus(
@@ -71,20 +73,42 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
   const waitingVisitors = visitors.filter(v => v.effectiveStatus === "waiting")
   const activeNowVisitors = visitors.filter(v => v.effectiveStatus === "active")
   const overtimeVisitors = visitors.filter(v => v.effectiveStatus === "warn" || v.effectiveStatus === "overtime")
-  // animate css
+
+  // -----------------------------
+  // REMOVE ANIMATION
+  // -----------------------------
   const [removingIds, setRemovingIds] = useState<number[]>([])
 
-  /*
-  useLayoutEffect(() => {
-    gsap.from(".visitor-row", {
-      opacity: 0,
-      y: -10,
-      duration: 0.25,
-      ease: "power2.out",
-      stagger: 0.03
+  // -----------------------------
+  // FLIP ANIMATION: TRACK PREVIOUS STATUS
+  // -----------------------------
+  const [previousStatuses, setPreviousStatuses] = useState<Record<number, string>>({})
+  const [justFlippedIds, setJustFlippedIds] = useState<number[]>([])
+
+  // unified effect: track previous + detect transitions
+  useEffect(() => {
+    const newPrev: Record<number, string> = {}
+    const newlyFlipped: number[] = []
+
+    visitors.forEach(v => {
+      const prev = previousStatuses[v.id]
+      if (prev === "warn" && v.effectiveStatus === "overtime") {
+        newlyFlipped.push(v.id)
+      }
+      newPrev[v.id] = v.effectiveStatus
     })
-  }, [room.visitors])
-  */
+
+    if (newlyFlipped.length > 0) {
+      setJustFlippedIds(ids => [...ids, ...newlyFlipped])
+      setTimeout(() => setJustFlippedIds([]), 800)
+    }
+
+    setPreviousStatuses(newPrev)
+  }, [visitors])
+
+  // -----------------------------
+  // COUNTERS
+  // -----------------------------
   const W = waitingVisitors.length
   const A = activeNowVisitors.length
   const UZ = visitors.filter(v => v.effectiveStatus === "overtime").length
@@ -113,200 +137,205 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
   return (
     <div className="w-full h-full p-6 flex flex-col gap-4">
 
-  {/* Title */}
-  <h1 className="text-2xl font-bold text-base-content">
-    Einlassregelung – {room.settings.name}
-  </h1>
+      {/* Title */}
+      <h1 className="text-2xl font-bold text-base-content">
+        Einlassregelung – {room.settings.name}
+      </h1>
 
-  {/* Counters */}
-  <div className="flex gap-6 text-lg font-semibold text-base-content">
-    <div>W: {W}</div>
-    <div>A: {A}</div>
-    <div>ÜZ: {UZ}</div>
-    <div>RT: {RT}</div>
-    <div>TT: {TT}</div>
-  </div>
-
-  {/* Occupancy */}
-  <div className="text-base-content font-medium">{occupancyText}</div>
-
-  {/* Clear All */}
-  <button
-    className="btn btn-outline btn-error w-fit"
-    onClick={() => {
-      Swal.fire({
-        title: "Alle löschen?",
-        text: "Möchtest du wirklich alle Besucher entfernen?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Ja, löschen",
-        cancelButtonText: "Abbrechen"
-      }).then(result => {
-        if (result.isConfirmed) onClearVisitors(room.id)
-      })
-    }}
-  >
-    Clear All
-  </button>
-
-  {/* Check-In */}
-  <div className="flex gap-3 items-center mb-4">
-    <input
-      type="text"
-      placeholder="Name eingeben..."
-      className="input input-bordered flex-1"
-      value={newName}
-      onChange={(e) => setNewName(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && newName.trim()) {
-          onAddVisitor(room.id, newName.trim())
-          setNewName("")
-        }
-      }}
-    />
-
-    <button
-      className="btn btn-outline btn-success"
-      onClick={() => {
-        if (!newName.trim()) return
-        onAddVisitor(room.id, newName.trim())
-        setNewName("")
-      }}
-    >
-      Check-In
-    </button>
-  </div>
-
-  {/* Two-column layout */}
-  <div className="flex gap-6 flex-1">
-
-    {/* LEFT: Warten / Aktiv */}
-    <div className="w-1/2">
-      <h2 className="text-xl font-bold mb-2 text-base-content">Warten / Aktiv</h2>
-
-      <div className="grid grid-cols-5 font-semibold border-b border-base-300 pb-1 mb-2 text-base-content">
-        <div>No</div>
-        <div>Name</div>
-        <div>Status</div>
-        <div>Min</div>
-        <div className="text-right">Aktion</div>
+      {/* Counters */}
+      <div className="flex gap-6 text-lg font-semibold text-base-content">
+        <div>W: {W}</div>
+        <div>A: {A}</div>
+        <div>ÜZ: {UZ}</div>
+        <div>RT: {RT}</div>
+        <div>TT: {TT}</div>
       </div>
 
-      <div className="space-y-2">
+      {/* Occupancy */}
+      <div className="text-base-content font-medium">{occupancyText}</div>
 
-        {/* WAITING LIST */}
-        {waitingVisitors.map(v => (
-          <div
-            key={v.id}
-            className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
-              animate__animated 
-              ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
-              ${getRowColor(v.effectiveStatus)}
-            `}
-          >
-            <div>{v.id}</div>
-            <div>{v.name}</div>
-            <div>Warten</div>
-            <div>-</div>
+      {/* Clear All */}
+      <button
+        className="btn btn-outline btn-error w-fit"
+        onClick={() => {
+          Swal.fire({
+            title: "Alle löschen?",
+            text: "Möchtest du wirklich alle Besucher entfernen?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ja, löschen",
+            cancelButtonText: "Abbrechen"
+          }).then(result => {
+            if (result.isConfirmed) onClearVisitors(room.id)
+          })
+        }}
+      >
+        Clear All
+      </button>
 
-            <div className="flex justify-end gap-2">
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => onSetActive(room.id, v.id)}
-              >
-                <i className="fa-solid fa-arrow-right-to-bracket"></i>
-              </button>
+      {/* Check-In */}
+      <div className="flex gap-3 items-center mb-4">
+        <input
+          type="text"
+          placeholder="Name eingeben..."
+          className="input input-bordered flex-1"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && newName.trim()) {
+              onAddVisitor(room.id, newName.trim())
+              setNewName("")
+            }
+          }}
+        />
 
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => {
-                  setRemovingIds(ids => [...ids, v.id])
-                  setTimeout(() => onRemove(room.id, v.id), 400)
-                }}
-              >
-                <i className="fa-solid fa-arrow-right-from-bracket"></i>
-              </button>
-            </div>
+        <button
+          className="btn btn-outline btn-success"
+          onClick={() => {
+            if (!newName.trim()) return
+            onAddVisitor(room.id, newName.trim())
+            setNewName("")
+          }}
+        >
+          Check-In
+        </button>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="flex gap-6 flex-1">
+
+        {/* LEFT: Warten / Aktiv */}
+        <div className="w-1/2">
+          <h2 className="text-xl font-bold mb-2 text-base-content">Warten / Aktiv</h2>
+
+          <div className="grid grid-cols-5 font-semibold border-b border-base-300 pb-1 mb-2 text-base-content">
+            <div>No</div>
+            <div>Name</div>
+            <div>Status</div>
+            <div>Min</div>
+            <div className="text-right">Aktion</div>
           </div>
-        ))}
 
-        {/* ACTIVE LIST */}
-        {activeNowVisitors.map(v => (
-          <div
-            key={v.id}
-            className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
-              animate__animated
-              ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
-              ${getRowColor(v.effectiveStatus)}
-            `}
-          >
-            <div>{v.id}</div>
-            <div>{v.name}</div>
-            <div>Aktiv</div>
-            <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
+          <div className="space-y-2">
 
-            <div className="flex justify-end gap-2">
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => {
-                  setRemovingIds(ids => [...ids, v.id])
-                  setTimeout(() => onRemove(room.id, v.id), 400)
-                }}
+            {/* WAITING LIST */}
+            {waitingVisitors.map(v => (
+              <div
+                key={v.id}
+                className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
+                  animate__animated 
+                  ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
+                  ${getRowColor(v.effectiveStatus)}
+                `}
               >
-                <i className="fa-solid fa-arrow-right-from-bracket"></i>
-              </button>
-            </div>
+                <div>{v.id}</div>
+                <div>{v.name}</div>
+                <div>Warten</div>
+                <div>-</div>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => onSetActive(room.id, v.id)}
+                  >
+                    <i className="fa-solid fa-arrow-right-to-bracket"></i>
+                  </button>
+
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      setRemovingIds(ids => [...ids, v.id])
+                      setTimeout(() => onRemove(room.id, v.id), 400)
+                    }}
+                  >
+                    <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* ACTIVE LIST */}
+            {activeNowVisitors.map(v => (
+              <div
+                key={v.id}
+                className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
+                  animate__animated
+                  ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
+                  ${getRowColor(v.effectiveStatus)}
+                `}
+              >
+                <div>{v.id}</div>
+                <div>{v.name}</div>
+                <div>Aktiv</div>
+                <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      setRemovingIds(ids => [...ids, v.id])
+                      setTimeout(() => onRemove(room.id, v.id), 400)
+                    }}
+                  >
+                    <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+
           </div>
-        ))}
+        </div>
+
+        {/* RIGHT: Überzeit */}
+        <div className="w-1/2">
+          <h2 className="text-xl font-bold mb-2 text-base-content">Überzeit</h2>
+
+          <div className="grid grid-cols-4 font-semibold border-b border-base-300 pb-1 mb-2 text-base-content">
+            <div>No</div>
+            <div>Name</div>
+            <div>Min</div>
+            <div className="text-right">Aktion</div>
+          </div>
+
+          <div className="space-y-2">
+            {overtimeVisitors.map(v => (
+              <div
+                key={v.id}
+                className={`grid grid-cols-4 p-3 h-16 text-sm border border-base-300 items-center
+                  animate__animated
+                  ${
+                    justFlippedIds.includes(v.id)
+                      ? "animate__flipInX"
+                      : removingIds.includes(v.id)
+                        ? "animate__fadeOut"
+                        : ""
+                  }
+                  ${getRowColor(v.effectiveStatus)}
+                `}
+              >
+                <div>{v.id}</div>
+                <div>{v.name}</div>
+                <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
+
+                <div className="flex justify-end">
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => {
+                      setRemovingIds(ids => [...ids, v.id])
+                      setTimeout(() => onRemove(room.id, v.id), 400)
+                    }}
+                  >
+                    <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
 
       </div>
     </div>
-
-    {/* RIGHT: Überzeit */}
-    <div className="w-1/2">
-      <h2 className="text-xl font-bold mb-2 text-base-content">Überzeit</h2>
-
-      <div className="grid grid-cols-4 font-semibold border-b border-base-300 pb-1 mb-2 text-base-content">
-        <div>No</div>
-        <div>Name</div>
-        <div>Min</div>
-        <div className="text-right">Aktion</div>
-      </div>
-
-      <div className="space-y-2">
-        {overtimeVisitors.map(v => (
-          <div
-            key={v.id}
-            className={`grid grid-cols-4 p-3 h-16 text-sm border border-base-300 items-center
-              animate__animated
-              ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInUp"}
-              ${getRowColor(v.effectiveStatus)}
-            `}
-          >
-            <div>{v.id}</div>
-            <div>{v.name}</div>
-            <div>{formatMinSec(v.minutes, now, v.startTime)}</div>
-
-            <div className="flex justify-end">
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => {
-                  setRemovingIds(ids => [...ids, v.id])
-                  setTimeout(() => onRemove(room.id, v.id), 400)
-                }}
-              >
-                <i className="fa-solid fa-arrow-right-from-bracket"></i>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-    </div>
-
-  </div>
-</div>
-
   )
 }
 
