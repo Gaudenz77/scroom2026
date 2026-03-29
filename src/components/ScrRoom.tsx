@@ -224,7 +224,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
                 key={v.id}
                 className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
                   animate__animated 
-                  ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
+                  ${removingIds.includes(v.id) ? "animate__rotateOutUpLeft" : "animate__backInLeft"}
                   ${getRowColor(v.effectiveStatus)}
                 `}
               >
@@ -260,7 +260,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
                 key={v.id}
                 className={`grid grid-cols-5 p-3 h-16 text-sm border border-base-300 items-center
                   animate__animated
-                  ${removingIds.includes(v.id) ? "animate__fadeOut" : "animate__backInLeft"}
+                  ${removingIds.includes(v.id) ? "animate__rotateOutUpLeft" : "animate__backInLeft"}
                   ${getRowColor(v.effectiveStatus)}
                 `}
               >
@@ -307,7 +307,7 @@ export default function ScrRoom({ room, onSetActive, onRemove, onAddVisitor, onC
                     justFlippedIds.includes(v.id)
                       ? "animate__flipInX"
                       : removingIds.includes(v.id)
-                        ? "animate__fadeOut"
+                        ? "animate__rotateOutUpRight"
                         : ""
                   }
                   ${getRowColor(v.effectiveStatus)}
